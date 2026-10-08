@@ -18,7 +18,6 @@ jobs:
         java-version: '17'
         distribution: 'temurin'
 
-    # Gradle 8.5 নির্দিষ্ট করে সেটআপ করা হচ্ছে
     - name: Setup Gradle 8.5
       uses: gradle/actions/setup-gradle@v4
       with:
@@ -29,11 +28,12 @@ jobs:
         PROJECT_DIR=$(find . -name "settings.gradle" -o -name "settings.gradle.kts" | head -n 1 | xargs dirname)
         cd $PROJECT_DIR
         
-        # সিস্টেমের Gradle 8.5 ব্যবহার করে বিল্ড
+        # বিল্ড চালানো
         gradle assembleRelease --no-daemon
         
+        # জেনারেট হওয়া APK ফাইল খুঁজে বের করে আউটপুট ফোল্ডারে কপি করা
         mkdir -p $GITHUB_WORKSPACE/build_output
-        cp app/build/outputs/apk/release/*.apk $GITHUB_WORKSPACE/build_output/ || cp */build/outputs/apk/release/*.apk $GITHUB_WORKSPACE/build_output/
+        find . -name "*.apk" -exec cp {} $GITHUB_WORKSPACE/build_output/ \;
 
     - name: Generate Certificate & Sign APK
       run: |

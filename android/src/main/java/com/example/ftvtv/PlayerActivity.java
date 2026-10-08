@@ -24,11 +24,6 @@ import androidx.media3.exoplayer.source.DefaultMediaSourceFactory;
 import androidx.media3.exoplayer.trackselection.DefaultTrackSelector;
 import androidx.media3.ui.PlayerView;
 
-/**
- * ============================================================================
- * FILE: app/src/main/java/com/example/ftvtv/PlayerActivity.java
- * ============================================================================
- */
 @UnstableApi
 public class PlayerActivity extends Activity {
 
@@ -306,7 +301,7 @@ public class PlayerActivity extends Activity {
 
     @Override
     protected void onSaveInstanceState(Bundle outState) {
-        super.outState);
+        super.onSaveInstanceState(outState);
         if (player != null) {
             outState.putLong(STATE_POSITION, player.getCurrentPosition());
         }

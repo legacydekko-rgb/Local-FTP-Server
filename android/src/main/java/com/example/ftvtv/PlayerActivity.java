@@ -28,30 +28,6 @@ import androidx.media3.ui.PlayerView;
  * ============================================================================
  * FILE: app/src/main/java/com/example/ftvtv/PlayerActivity.java
  * ============================================================================
- * THE APP'S OWN INTERNAL VIDEO PLAYER.
- *
- * This is the activity that makes the app "play the movie itself" instead of
- * throwing the link at a browser.
- *
- * Built on ExoPlayer (Media3), not VideoView, because ExoPlayer actually plays
- * what these directory servers serve:
- *   - MKV containers
- *   - H.264 / H.265 (HEVC) video
- *   - HLS (.m3u8) playlists
- *   - proper HTTP seeking, buffering and retry
- *
- * >>> IF A FILE HAS NO SOUND (AC3 / DTS / EAC3 audio tracks):
- *     Those codecs are licensed and are NOT in the open-source ExoPlayer build.
- *     This activity detects the failure and offers a one-press hand-off to
- *     VLC / MX Player, which ship their own licensed decoders. That is the
- *     intended behaviour, not a bug - see showPlaybackError() below.
- *
- * Remote control:
- *   OK / Center    play / pause
- *   LEFT / RIGHT   rewind / fast-forward 10 s
- *   UP / DOWN      show the controls
- *   BACK           exit the player
- * ============================================================================
  */
 @UnstableApi
 public class PlayerActivity extends Activity {
@@ -59,10 +35,7 @@ public class PlayerActivity extends Activity {
     public static final String EXTRA_VIDEO_URL = "extra_video_url";
     public static final String EXTRA_TITLE = "extra_title";
 
-    /** How far the LEFT / RIGHT keys seek. */
     private static final long SEEK_MS = 10_000L;
-
-    /** Remembered position so a pause/resume keeps your place. */
     private static final String STATE_POSITION = "state_position";
 
     private PlayerView playerView;
@@ -79,12 +52,11 @@ public class PlayerActivity extends Activity {
 
     private final Handler handler = new Handler(Looper.getMainLooper());
 
-    /** Hides the title overlay a few seconds after playback begins. */
     private final Runnable hideOverlay = new Runnable() {
         @Override
         public void run() {
             if (errorView != null && errorView.getVisibility() == View.VISIBLE) {
-                return; // keep the error panel up
+                return;
             }
             if (titleView != null) {
                 titleView.setVisibility(View.GONE);
@@ -92,16 +64,11 @@ public class PlayerActivity extends Activity {
         }
     };
 
-    /* =====================================================================
-     * LIFECYCLE
-     * =================================================================== */
-
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_player);
 
-        // Keep the TV awake while a film is playing.
         getWindow().addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
 
         playerView = (PlayerView) findViewById(R.id.player_view);
@@ -136,19 +103,11 @@ public class PlayerActivity extends Activity {
         buildPlayer();
     }
 
-    /** Creates the ExoPlayer instance and wires every callback. */
     private void buildPlayer() {
-        // Track selector: let ExoPlayer pick the best audio/video track.
         DefaultTrackSelector trackSelector = new DefaultTrackSelector(this);
 
-        // Load control: a larger buffer than default makes seeking inside a big
-        // MKV over LAN far smoother.
         DefaultLoadControl loadControl = new DefaultLoadControl.Builder()
-                .setBufferDurationsMs(
-                        30_000,   // min buffer
-                        90_000,   // max buffer
-                        1_500,    // buffer needed to start playback
-                        3_000)    // buffer needed after a seek
+                .setBufferDurationsMs(30_000, 90_000, 1_500, 3_000)
                 .build();
 
         player = new ExoPlayer.Builder(this)
@@ -158,15 +117,12 @@ public class PlayerActivity extends Activity {
                 .build();
 
         playerView.setPlayer(player);
-
-        // TV-friendly controller: OK toggles it, arrows seek.
         playerView.setUseController(true);
         playerView.setControllerShowTimeoutMs(3500);
         playerView.setControllerHideOnTouch(false);
-        playerView.setShowBuffering(PlayerView.SHOW_BUFFERING_NEVER); // we draw our own
+        playerView.setShowBuffering(PlayerView.SHOW_BUFFERING_NEVER);
 
         player.addListener(new Player.Listener() {
-
             @Override
             public void onPlaybackStateChanged(int state) {
                 switch (state) {
@@ -182,7 +138,7 @@ public class PlayerActivity extends Activity {
                         break;
                     case Player.STATE_ENDED:
                         buffering.setVisibility(View.GONE);
-                        finish(); // return to the folder listing
+                        finish();
                         break;
                     default:
                         buffering.setVisibility(View.GONE);
@@ -209,7 +165,6 @@ public class PlayerActivity extends Activity {
         play(videoUrl);
     }
 
-    /** Points the player at a URL and starts it. */
     private void play(String url) {
         try {
             MediaItem item = buildMediaItem(url);
@@ -223,24 +178,17 @@ public class PlayerActivity extends Activity {
         }
     }
 
-    /**
-     * Builds the MediaItem, telling ExoPlayer which extractor to use.
-     *
-     * The MIME hint matters: some directory servers send
-     * "Content-Type: application/octet-stream" or no type at all for .mkv,
-     * and ExoPlayer then refuses to guess. Setting it explicitly from the file
-     * extension makes MKV / TS / MP4 all open reliably.
-     */
     private MediaItem buildMediaItem(String url) {
-        MediaItem.Builder builder = MediaItem.Builder().setUri(Uri.parse(url));
         String mime = mimeFor(url);
         if (mime != null) {
-            builder.setMimeType(mime);
+            return new MediaItem.Builder()
+                    .setUri(Uri.parse(url))
+                    .setMimeType(mime)
+                    .build();
         }
-        return builder.build();
+        return MediaItem.fromUri(Uri.parse(url));
     }
 
-    /** Maps a URL's extension to an ExoPlayer MIME type, or null to auto-detect. */
     private String mimeFor(String url) {
         String lower = url.toLowerCase();
         int cut = lower.length();
@@ -256,24 +204,11 @@ public class PlayerActivity extends Activity {
         if (path.endsWith(".webm")) return MimeTypes.VIDEO_WEBM;
         if (path.endsWith(".mkv"))  return MimeTypes.VIDEO_MATROSKA;
         if (path.endsWith(".ts") || path.endsWith(".m2ts")) return MimeTypes.VIDEO_MP2T;
-        // avi / flv / wmv / mov etc: let ExoPlayer sniff it.
         return null;
     }
 
-    /* =====================================================================
-     * ERRORS  -  the important part for AC3 / DTS audio
-     * =================================================================== */
-
-    /**
-     * Turns a PlaybackException into something a normal person can act on.
-     *
-     * The AC3/DTS case is the one that matters in practice: the video track is
-     * fine, only the audio decoder is missing. Instead of a dead end we say so
-     * and offer the external player.
-     */
     private void showPlaybackError(PlaybackException error) {
         String message;
-
         switch (error.errorCode) {
             case PlaybackException.ERROR_CODE_IO_FILE_NOT_FOUND:
                 message = "The file was not found on the server.\nIt may have been moved or deleted.";
@@ -290,23 +225,16 @@ public class PlayerActivity extends Activity {
             case PlaybackException.ERROR_CODE_DECODING_FAILED:
             case PlaybackException.ERROR_CODE_AUDIO_TRACK_INIT_FAILED:
             case PlaybackException.ERROR_CODE_AUDIO_TRACK_WRITE_FAILED:
-                // >>> The classic MKV-with-AC3/DTS case lands here. <<<
-                // The video track is fine; only the audio decoder is missing,
-                // because AC3/DTS/EAC3 are licensed and are not part of the
-                // open-source ExoPlayer build.
                 message = "This file uses an audio or video codec the built-in player "
                         + "cannot decode (usually AC3, DTS or EAC3 audio inside an MKV).\n\n"
                         + "VLC or MX Player can play it - they include their own decoders.";
                 break;
             default:
-                // Everything else: show Media3's own name for the error code so
-                // the message stays useful without guessing at constants.
                 message = "Playback failed.\n\n"
                         + "Reason: " + error.getErrorCodeName()
                         + "\n\nIf this repeats, open the file with VLC or MX Player.";
                 break;
         }
-
         showSimpleError(message);
     }
 
@@ -319,20 +247,11 @@ public class PlayerActivity extends Activity {
         }
     }
 
-    /**
-     * Hands the current stream to an external player (VLC / MX Player) using the
-     * app's own chooser, so the user picks and the choice is remembered.
-     */
     private void handOffToExternalPlayer() {
-        // Release our player first so the other app gets the full decoder pool.
         releasePlayer();
         VideoPlayerChooser.show(this, videoUrl, title, null);
         finish();
     }
-
-    /* =====================================================================
-     * REMOTE CONTROL
-     * =================================================================== */
 
     @Override
     public boolean onKeyDown(int keyCode, KeyEvent event) {
@@ -340,14 +259,12 @@ public class PlayerActivity extends Activity {
             return super.onKeyDown(keyCode, event);
         }
         switch (keyCode) {
-
             case KeyEvent.KEYCODE_DPAD_CENTER:
             case KeyEvent.KEYCODE_ENTER:
             case KeyEvent.KEYCODE_NUMPAD_ENTER:
             case KeyEvent.KEYCODE_BUTTON_A:
             case KeyEvent.KEYCODE_MEDIA_PLAY_PAUSE:
             case KeyEvent.KEYCODE_SPACE:
-                // If the error panel is showing, OK retries with an external player.
                 if (errorView != null && errorView.getVisibility() == View.VISIBLE) {
                     handOffToExternalPlayer();
                     return true;
@@ -368,15 +285,13 @@ public class PlayerActivity extends Activity {
 
             case KeyEvent.KEYCODE_DPAD_RIGHT:
             case KeyEvent.KEYCODE_MEDIA_FAST_FORWARD:
-                player.seekTo(Math.min(player.getDuration(),
-                        player.getCurrentPosition() + SEEK_MS));
+                player.seekTo(Math.min(player.getDuration(), player.getCurrentPosition() + SEEK_MS));
                 playerView.showController();
                 return true;
 
             case KeyEvent.KEYCODE_DPAD_UP:
             case KeyEvent.KEYCODE_DPAD_DOWN:
             case KeyEvent.KEYCODE_MENU:
-                // Bring the controls up; the D-Pad then moves inside them.
                 playerView.showController();
                 return true;
 
@@ -389,13 +304,9 @@ public class PlayerActivity extends Activity {
         }
     }
 
-    /* =====================================================================
-     * LIFECYCLE HOUSEKEEPING
-     * =================================================================== */
-
     @Override
     protected void onSaveInstanceState(Bundle outState) {
-        super.onSaveInstanceState(outState);
+        super.outState);
         if (player != null) {
             outState.putLong(STATE_POSITION, player.getCurrentPosition());
         }
@@ -426,7 +337,6 @@ public class PlayerActivity extends Activity {
         super.onDestroy();
     }
 
-    /** Idempotent teardown: safe to call more than once. */
     private void releasePlayer() {
         if (player != null) {
             player.stop();
@@ -440,7 +350,6 @@ public class PlayerActivity extends Activity {
 
     @Override
     public void onBackPressed() {
-        // Remember where we were, then leave.
         if (player != null) {
             resumePosition = player.getCurrentPosition();
         }

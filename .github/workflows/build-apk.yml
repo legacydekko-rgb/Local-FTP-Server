@@ -18,23 +18,22 @@ jobs:
         java-version: '17'
         distribution: 'temurin'
 
-    - name: Setup Gradle
+    # Gradle 8.5 নির্দিষ্ট করে সেটআপ করা হচ্ছে
+    - name: Setup Gradle 8.5
       uses: gradle/actions/setup-gradle@v4
+      with:
+        gradle-version: '8.5'
 
     - name: Find Project Directory & Build
       run: |
         PROJECT_DIR=$(find . -name "settings.gradle" -o -name "settings.gradle.kts" | head -n 1 | xargs dirname)
         cd $PROJECT_DIR
         
-        if [ -f "./gradlew" ]; then
-          chmod +x gradlew
-          ./gradlew assembleRelease --no-daemon
-        else
-          gradle assembleRelease --no-daemon
-        fi
+        # সিস্টেমের Gradle 8.5 ব্যবহার করে বিল্ড
+        gradle assembleRelease --no-daemon
         
         mkdir -p $GITHUB_WORKSPACE/build_output
-        cp app/build/outputs/apk/release/*.apk $GITHUB_WORKSPACE/build_output/
+        cp app/build/outputs/apk/release/*.apk $GITHUB_WORKSPACE/build_output/ || cp */build/outputs/apk/release/*.apk $GITHUB_WORKSPACE/build_output/
 
     - name: Generate Certificate & Sign APK
       run: |

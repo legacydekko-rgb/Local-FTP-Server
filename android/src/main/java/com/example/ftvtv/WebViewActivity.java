@@ -1,9 +1,7 @@
 package com.example.ftvtv;
 
 import android.app.Activity;
-import android.app.AlertDialog;
 import android.content.Intent;
-import android.net.Uri;
 import android.os.Bundle;
 import android.view.KeyEvent;
 import android.view.View;
@@ -16,7 +14,6 @@ import android.widget.Toast;
 
 public class WebViewActivity extends Activity {
 
-    // MainActivity ও Intent support এর জন্য সব ধরনের Extra Key Support
     public static final String EXTRA_URL = "extra_url";
     public static final String EXTRA_TITLE = "extra_title";
     public static final String EXTRA_SERVER_NAME = "extra_server_name";
@@ -33,11 +30,18 @@ public class WebViewActivity extends Activity {
         setContentView(R.layout.activity_webview);
 
         webView = findViewById(R.id.web_view);
-        progressBar = findViewById(R.id.web_progress);
+        
+        // ID অমিল রোধ করার জন্য সেফ আইডি চেকিং
+        int progressId = getResources().getIdentifier("web_progress", "id", getPackageName());
+        if (progressId == 0) {
+            progressId = getResources().getIdentifier("progress_bar", "id", getPackageName());
+        }
+        if (progressId != 0) {
+            progressBar = findViewById(progressId);
+        }
 
         Intent intent = getIntent();
         if (intent != null) {
-            // URL নেওয়ার জন্য মাল্টিপল কি (Key) চেক
             if (intent.hasExtra(EXTRA_URL)) {
                 targetUrl = intent.getStringExtra(EXTRA_URL);
             } else if (intent.hasExtra(EXTRA_SERVER_URL)) {

@@ -1,0 +1,114 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  ============================================================================
+  FILE:  app/src/main/res/layout/activity_player.xml
+  ============================================================================
+  Layout for the app's INTERNAL player (ExoPlayer / Media3).
+
+  PlayerView replaces the old VideoView: it renders the ExoPlayer video surface
+  AND its controller (play/pause, seek bar, time) with correct TV D-Pad focus.
+
+  AIDE USERS: androidx.media3.ui.PlayerView is an androidx view, so AIDE cannot
+  inflate it. If you build in AIDE, either
+    (a) keep this layout out of the AIDE project and use the platform VideoView
+        version described in android/AIDE/README-AIDE.txt, or
+    (b) simply let the app hand video files to VLC / MX Player - which is what
+        AIDE users should do anyway, since AIDE has no Media3 dependency.
+  ============================================================================
+-->
+<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="#000000">
+
+    <!-- ============ EXOPLAYER SURFACE + CONTROLLER ============ -->
+    <!--
+      No app:controller_layout_id is set on purpose: PlayerView then uses the
+      stock Media3 controller, which already has correct D-Pad focus handling.
+      A custom controller layout must reproduce Media3's internal view ids
+      (exo_play, exo_pause, exo_progress, ...) exactly or it inflates blank.
+    -->
+    <androidx.media3.ui.PlayerView
+        android:id="@+id/player_view"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:layout_gravity="center"
+        android:focusable="true"
+        app:resize_mode="fit"
+        app:show_buffering="never"
+        app:use_controller="true" />
+
+    <!-- ============ OUR OWN BUFFERING SPINNER ============ -->
+    <ProgressBar
+        android:id="@+id/player_buffering"
+        android:layout_width="54dp"
+        android:layout_height="54dp"
+        android:layout_gravity="center"
+        android:visibility="gone" />
+
+    <!-- ============ TITLE BAR (auto-hides) ============ -->
+    <TextView
+        android:id="@+id/player_title"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_gravity="top"
+        android:background="#99000000"
+        android:ellipsize="end"
+        android:maxLines="1"
+        android:padding="16dp"
+        android:textColor="#FFFFFF"
+        android:textSize="15sp" />
+
+    <!-- ============ ERROR PANEL (codec / network failures) ============ -->
+    <LinearLayout
+        android:id="@+id/player_error"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:background="#F00B0F14"
+        android:gravity="center"
+        android:orientation="vertical"
+        android:padding="48dp"
+        android:visibility="gone">
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="@string/player_error_title"
+            android:textColor="#FF6B6B"
+            android:textSize="20sp"
+            android:textStyle="bold" />
+
+        <TextView
+            android:id="@+id/player_error_text"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="14dp"
+            android:gravity="center"
+            android:lineSpacingExtra="4dp"
+            android:maxWidth="620dp"
+            android:textColor="#C9D1DC"
+            android:textSize="14sp" />
+
+        <Button
+            android:id="@+id/player_open_external"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="26dp"
+            android:background="@drawable/pill_button"
+            android:focusable="true"
+            android:paddingLeft="28dp"
+            android:paddingRight="28dp"
+            android:text="@string/player_open_external"
+            android:textColor="#FFFFFF" />
+
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="12dp"
+            android:gravity="center"
+            android:text="@string/player_error_hint"
+            android:textColor="#66738A"
+            android:textSize="12sp" />
+    </LinearLayout>
+</FrameLayout>

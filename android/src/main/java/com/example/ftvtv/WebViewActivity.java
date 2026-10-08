@@ -10,19 +10,15 @@ import android.webkit.WebSettings;
 import android.webkit.WebView;
 import android.webkit.WebViewClient;
 import android.widget.ProgressBar;
-import android.widget.Toast;
 
 public class WebViewActivity extends Activity {
 
-    public static final String EXTRA_URL = "extra_url";
-    public static final String EXTRA_TITLE = "extra_title";
-    public static final String EXTRA_SERVER_NAME = "extra_server_name";
     public static final String EXTRA_SERVER_URL = "extra_server_url";
-    public static final String EXTRA_ACCENT = "extra_accent";
+    public static final String EXTRA_SERVER_NAME = "extra_server_name";
 
     private WebView webView;
     private ProgressBar progressBar;
-    private String targetUrl = "";
+    private String targetUrl = "http://172.16.50.14/";
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -30,52 +26,35 @@ public class WebViewActivity extends Activity {
         setContentView(R.layout.activity_webview);
 
         webView = findViewById(R.id.web_view);
-        
-        // ID অমিল রোধ করার জন্য সেফ আইডি চেকিং
         int progressId = getResources().getIdentifier("web_progress", "id", getPackageName());
-        if (progressId == 0) {
-            progressId = getResources().getIdentifier("progress_bar", "id", getPackageName());
-        }
         if (progressId != 0) {
             progressBar = findViewById(progressId);
         }
 
         Intent intent = getIntent();
-        if (intent != null) {
-            if (intent.hasExtra(EXTRA_URL)) {
-                targetUrl = intent.getStringExtra(EXTRA_URL);
-            } else if (intent.hasExtra(EXTRA_SERVER_URL)) {
-                targetUrl = intent.getStringExtra(EXTRA_SERVER_URL);
-            }
-
-            String title = intent.hasExtra(EXTRA_TITLE) ? intent.getStringExtra(EXTRA_TITLE) : intent.getStringExtra(EXTRA_SERVER_NAME);
-            if (title != null && getActionBar() != null) {
-                getActionBar().setTitle(title);
-            }
+        if (intent != null && intent.hasExtra(EXTRA_SERVER_URL)) {
+            targetUrl = intent.getStringExtra(EXTRA_SERVER_URL);
         }
 
-        if (targetUrl == null || targetUrl.isEmpty()) {
-            Toast.makeText(this, "Invalid URL", Toast.LENGTH_SHORT).show();
-            finish();
-            return;
-        }
-
+        // WebView Settings for Android TV & Remote Navigation
         WebSettings settings = webView.getSettings();
         settings.setJavaScriptEnabled(true);
         settings.setDomStorageEnabled(true);
         settings.setAllowFileAccess(true);
         settings.setMediaPlaybackRequiresUserGesture(false);
 
+        webView.setFocusable(true);
+        webView.setFocusableInTouchMode(true);
+
         webView.setWebViewClient(new WebViewClient() {
             @Override
             public boolean shouldOverrideUrlLoading(WebView view, WebResourceRequest request) {
-                String url = request.getUrl().toString();
-                return handleUrl(url);
+                return handleVideoOrNavigation(request.getUrl().toString());
             }
 
             @Override
             public boolean shouldOverrideUrlLoading(WebView view, String url) {
-                return handleUrl(url);
+                return handleVideoOrNavigation(url);
             }
 
             @Override
@@ -84,19 +63,28 @@ public class WebViewActivity extends Activity {
                 if (progressBar != null) {
                     progressBar.setVisibility(View.GONE);
                 }
+
+                // টিভিতে রিমোটের ফোকাস পরিষ্কার বোঝার জন্য লাল রঙের আউটলাইন (Red Focus Border)
+                webView.evaluateJavascript(
+                    "javascript:(function() {" +
+                    "   var style = document.createElement('style');" +
+                    "   style.innerHTML = 'a:focus, button:focus, [tabindex]:focus { outline: 4px solid #FF0000 !important; background-color: rgba(255,0,0,0.2) !important; }';" +
+                    "   document.head.appendChild(style);" +
+                    "})()", null);
             }
         });
 
         webView.loadUrl(targetUrl);
     }
 
-    private boolean handleUrl(String url) {
+    private boolean handleVideoOrNavigation(String url) {
         String lower = url.toLowerCase();
-        if (lower.endsWith(".mp4") || lower.endsWith(".mkv") || lower.endsWith(".m3u8") || 
-            lower.endsWith(".avi") || lower.endsWith(".webm") || lower.endsWith(".ts")) {
+        // ভিডিও ফরম্যাট পেলেই অ্যাপের নিজের প্লেয়ার চালূ হবে
+        if (lower.endsWith(".mp4") || lower.endsWith(".mkv") || lower.endsWith(".avi") || 
+            lower.endsWith(".m3u8") || lower.endsWith(".webm") || lower.endsWith(".ts")) {
             
             Intent intent = new Intent(this, PlayerActivity.class);
-            intent.putExtra(PlayerActivity.EXTRA_VIDEO_URL, url);
+            intent.putExtra("video_url", url);
             startActivity(intent);
             return true;
         }
@@ -106,7 +94,7 @@ public class WebViewActivity extends Activity {
     @Override
     public boolean onKeyDown(int keyCode, KeyEvent event) {
         if (keyCode == KeyEvent.KEYCODE_BACK && webView.canGoBack()) {
-            webView.goBack();
+            webView.goBack(); // রিমোটের ব্যাকে দিলে ফোল্ডারের পেছনে যাবে
             return true;
         }
         return super.onKeyDown(keyCode, event);

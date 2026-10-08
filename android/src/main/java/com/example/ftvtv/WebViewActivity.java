@@ -1,5 +1,7 @@
 package com.example.ftvtv;
 
+import android.app.Activity;
+import android.app.AlertDialog;
 import android.content.Intent;
 import android.net.Uri;
 import android.os.Bundle;
@@ -12,13 +14,14 @@ import android.webkit.WebViewClient;
 import android.widget.ProgressBar;
 import android.widget.Toast;
 
-import androidx.appcompat.app.AlertDialog;
-import androidx.appcompat.app.AppCompatActivity;
+public class WebViewActivity extends Activity {
 
-public class WebViewActivity extends AppCompatActivity {
-
+    // MainActivity ও Intent support এর জন্য সব ধরনের Extra Key Support
     public static final String EXTRA_URL = "extra_url";
     public static final String EXTRA_TITLE = "extra_title";
+    public static final String EXTRA_SERVER_NAME = "extra_server_name";
+    public static final String EXTRA_SERVER_URL = "extra_server_url";
+    public static final String EXTRA_ACCENT = "extra_accent";
 
     private WebView webView;
     private ProgressBar progressBar;
@@ -34,10 +37,16 @@ public class WebViewActivity extends AppCompatActivity {
 
         Intent intent = getIntent();
         if (intent != null) {
-            targetUrl = intent.getStringExtra(EXTRA_URL);
-            String title = intent.getStringExtra(EXTRA_TITLE);
-            if (title != null && getSupportActionBar() != null) {
-                getSupportActionBar().setTitle(title);
+            // URL নেওয়ার জন্য মাল্টিপল কি (Key) চেক
+            if (intent.hasExtra(EXTRA_URL)) {
+                targetUrl = intent.getStringExtra(EXTRA_URL);
+            } else if (intent.hasExtra(EXTRA_SERVER_URL)) {
+                targetUrl = intent.getStringExtra(EXTRA_SERVER_URL);
+            }
+
+            String title = intent.hasExtra(EXTRA_TITLE) ? intent.getStringExtra(EXTRA_TITLE) : intent.getStringExtra(EXTRA_SERVER_NAME);
+            if (title != null && getActionBar() != null) {
+                getActionBar().setTitle(title);
             }
         }
 

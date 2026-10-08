@@ -31,7 +31,7 @@ public final class ServerRepository {
     static {
         // name, tagline, url, initials, accent colour (0xFFRRGGBB)
         
-        // --- Aponar edited r unique server list ---
+        // --- ফিল্টার করা ইউনিক সার্ভার তালিকা ---
         SERVERS.add(new Server("Dhaka Flix",    "Movies & Series",      "http://172.16.50.14/",    "DF", 0xFF7C3AED));
         SERVERS.add(new Server("Local Server",  "LAN Media Server",     "http://10.16.100.244/",   "LS", 0xFF059669));
         SERVERS.add(new Server("CrazyCTG",      "Movies & Series",      "http://crazyctg.com/",    "CC", 0xFFDC2626));
@@ -86,4 +86,51 @@ public final class ServerRepository {
         SERVERS.add(new Server("Asian FTP",     "Asian Media FTP",      "http://asianftp.com/",    "AF", 0xFF4F46E5));
         SERVERS.add(new Server("Meta FTP",      "Meta Media Server",    "http://103.76.196.90/",   "MF", 0xFF059669));
         SERVERS.add(new Server("Genvideos",     "Genvideos Network",    "https://genvideos.org/",  "GV", 0xFFDC2626));
-        SERVERS.
+        SERVERS.add(new Server("Mango Gamers",  "Gaming & Media",       "https://mangogamers.com/","MG", 0xFF16A34A));
+        SERVERS.add(new Server("BD LAN",        "BD LAN Media Network", "http://www.bdlan.net/",   "BL", 0xFFEA580C));
+        SERVERS.add(new Server("SparkNet",      "SparkNet Media",       "https://sparknetbd.com/", "SN", 0xFFDC2626));
+        SERVERS.add(new Server("BNet BD",       "BNet Media Server",    "http://www.bnet-bd.com/", "BN", 0xFF0D9488));
+        SERVERS.add(new Server("Yes Hub",       "Yes Hub Media",        "http://103.58.73.9/",     "YH", 0xFF7C3AED));
+        SERVERS.add(new Server("Media FTPBD",   "FTPBD Media",          "http://media.ftpbd.net/", "MF", 0xFF2563EB));
+        SERVERS.add(new Server("FTPBD Server 1","FTPBD Server 1",       "http://server1.ftpbd.net/","F1", 0xFF0284C7));
+        SERVERS.add(new Server("FTPBD Server 4","FTPBD Server 4",       "http://server4.ftpbd.net/","F4", 0xFF059669));
+        SERVERS.add(new Server("SamBD",         "SamBD Media Network",  "https://sambd.com/",      "SB", 0xFF7C3AED));
+        SERVERS.add(new Server("RK Hub 1",      "RK Hub Server 1",      "http://172.16.50.4/",     "R1", 0xFFD97706));
+        SERVERS.add(new Server("RK Hub 2",      "RK Hub Server 2",      "http://172.16.50.5/",     "R2", 0xFFEA580C));
+        SERVERS.add(new Server("DDnBD",         "DDnBD Entertainment",  "https://ddnbd.com/",      "DD", 0xFF7C3AED));
+        SERVERS.add(new Server("DDnBD Fun",     "DDnBD Fun Media",      "http://www.ddnbd.fun/",   "DF", 0xFFDB2777));
+        SERVERS.add(new Server("CTG Fun",       "CTG Fun Media",        "http://media.ctgfun.com/","CF", 0xFFDB2777));
+        SERVERS.add(new Server("Play Box",      "Play Box Ebox",        "http://play.ebox.live/",  "PB", 0xFF2563EB));
+        SERVERS.add(new Server("Circle Network","Circle Network BD",    "https://circlenetworkbd.net/","CN", 0xFF2563EB));
+        SERVERS.add(new Server("Circle 2",      "Circle Server 2",      "http://15.1.1.1/",        "C2", 0xFF0284C7));
+        SERVERS.add(new Server("MyBD",          "MyBD Media",           "http://15.1.1.4/",        "MB", 0xFF4F46E5));
+        SERVERS.add(new Server("Circle 4",      "Circle Server 4",      "http://ftp4.circleftp.net/","C4", 0xFF059669));
+        SERVERS.add(new Server("Circle HD",     "Circle HD Server",     "http://hd.circleftp.net/","CH", 0xFFD97706));
+        SERVERS.add(new Server("Discovery Net", "Discovery Net BD",     "https://www.discoverynetbd.com/","DN", 0xFF9333EA));
+        SERVERS.add(new Server("Discovery IP",  "Discovery Server IP",  "http://103.120.165.196/", "DI", 0xFFDC2626));
+        SERVERS.add(new Server("DFlix Discovery","Discovery DFlix",     "http://dflix.discoveryftp.net/","DD", 0xFF7C3AED));
+        SERVERS.add(new Server("Discovery CDS1","Discovery CDS1",      "http://cds1.discoveryftp.net/","C1", 0xFF0284C7));
+        SERVERS.add(new Server("Discovery CDS2","Discovery CDS2",      "http://cds2.discoveryftp.net/","C2", 0xFF059669));
+        SERVERS.add(new Server("Discovery CDS3","Discovery CDS3",      "http://cds3.discoveryftp.net/","C3", 0xFFD97706));
+        SERVERS.add(new Server("Khulna Flix",   "Khulna Flix Media",    "http://khulnaflix.net/",  "KF", 0xFF059669));
+        SERVERS.add(new Server("File Khulna",   "File Khulna Flix",     "http://file.khulnaflix.net/","FK", 0xFFEA580C));
+        SERVERS.add(new Server("Exord Online",  "Exord Online FTP",     "http://www.exordonline.com/","EO", 0xFFD97706));
+        SERVERS.add(new Server("RK Box",        "RK Box Server",        "http://103.49.168.107/",  "RB", 0xFF4F46E5));
+        SERVERS.add(new Server("ICC Communication","ICC BDIX FTP",      "https://icc.com.bd/",     "IC", 0xFF9333EA));
+        SERVERS.add(new Server("ANT BD",        "ANT BD Media",         "http://www.antbd.net/",   "AB", 0xFF0284C7));
+        SERVERS.add(new Server("BD Net IP",     "BD Net Server IP",     "http://103.237.37.181/",  "BI", 0xFF16A34A));
+    }
+
+    /** @return an unmodifiable view of every configured server, in display order. */
+    public static List<Server> all() {
+        return Collections.unmodifiableList(SERVERS);
+    }
+
+    public static int size() {
+        return SERVERS.size();
+    }
+
+    public static Server get(int index) {
+        return SERVERS.get(index);
+    }
+}

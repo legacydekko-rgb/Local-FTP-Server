@@ -1,4 +1,4 @@
-name: Build Signed FTV TV APK
+name: Build Signed FTP TV APK
 
 on:
   push:
@@ -28,29 +28,24 @@ jobs:
         PROJECT_DIR=$(find . -name "settings.gradle" -o -name "settings.gradle.kts" | head -n 1 | xargs dirname)
         cd $PROJECT_DIR
         
-        # বিল্ড চালানো
         gradle assembleRelease --no-daemon
         
-        # জেনারেট হওয়া APK খুঁজে বের করে কপি করা
         mkdir -p $GITHUB_WORKSPACE/build_output
         find . -name "*.apk" -exec cp {} $GITHUB_WORKSPACE/build_output/ \;
 
     - name: Generate Certificate & Sign APK
       run: |
         cd $GITHUB_WORKSPACE/build_output
-        keytool -genkey -v -keystore release.keystore -alias ftvtv_key -keyalg RSA -keysize 2048 -validity 10000 -storepass 12345678 -keypass 12345678 -dname "CN=Sayful Islam, OU=FTV, O=FTV, L=Dhaka, C=BD"
+        keytool -genkey -v -keystore release.keystore -alias ftvtv_key -keyalg RSA -keysize 2048 -validity 10000 -storepass 12345678 -keypass 12345678 -dname "CN=Sayful Islam, OU=FTP TV, O=FTP TV, L=Dhaka, C=BD"
         
         BUILD_TOOLS_DIR=$(ls -d $ANDROID_HOME/build-tools/* | tail -n 1)
-        
-        # শুধু প্রথম Unsigned APK টি সুনির্দিষ্টভাবে নির্বাচন করা
         UNSIGNED_APK=$(ls *.apk | grep -v "Signed" | head -n 1)
-        SIGNED_APK="FTV-TV-Signed.apk"
+        SIGNED_APK="FTP-TV-Signed.apk"
         
-        echo "Signing target APK: $UNSIGNED_APK"
         $BUILD_TOOLS_DIR/apksigner sign --ks release.keystore --ks-pass pass:12345678 --ks-key-alias ftvtv_key --key-pass pass:12345678 --out $SIGNED_APK "$UNSIGNED_APK"
 
     - name: Upload Signed APK
       uses: actions/upload-artifact@v4
       with:
-        name: FTV-TV-Signed-APK
-        path: build_output/FTV-TV-Signed.apk
+        name: FTP-TV-Signed-APK
+        path: build_output/FTP-TV-Signed.apk

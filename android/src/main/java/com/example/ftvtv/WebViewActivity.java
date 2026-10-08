@@ -13,8 +13,11 @@ import android.widget.ProgressBar;
 
 public class WebViewActivity extends Activity {
 
-    public static final String EXTRA_SERVER_URL = "extra_server_url";
+    public static final String EXTRA_URL = "extra_url";
+    public static final String EXTRA_TITLE = "extra_title";
     public static final String EXTRA_SERVER_NAME = "extra_server_name";
+    public static final String EXTRA_SERVER_URL = "extra_server_url";
+    public static final String EXTRA_ACCENT = "extra_accent";
 
     private WebView webView;
     private ProgressBar progressBar;
@@ -32,11 +35,14 @@ public class WebViewActivity extends Activity {
         }
 
         Intent intent = getIntent();
-        if (intent != null && intent.hasExtra(EXTRA_SERVER_URL)) {
-            targetUrl = intent.getStringExtra(EXTRA_SERVER_URL);
+        if (intent != null) {
+            if (intent.hasExtra(EXTRA_SERVER_URL)) {
+                targetUrl = intent.getStringExtra(EXTRA_SERVER_URL);
+            } else if (intent.hasExtra(EXTRA_URL)) {
+                targetUrl = intent.getStringExtra(EXTRA_URL);
+            }
         }
 
-        // WebView Settings for Android TV & Remote Navigation
         WebSettings settings = webView.getSettings();
         settings.setJavaScriptEnabled(true);
         settings.setDomStorageEnabled(true);
@@ -64,7 +70,7 @@ public class WebViewActivity extends Activity {
                     progressBar.setVisibility(View.GONE);
                 }
 
-                // টিভিতে রিমোটের ফোকাস পরিষ্কার বোঝার জন্য লাল রঙের আউটলাইন (Red Focus Border)
+                // লাল ফোকাস বর্ডার (Red Focus Outline)
                 webView.evaluateJavascript(
                     "javascript:(function() {" +
                     "   var style = document.createElement('style');" +
@@ -79,12 +85,11 @@ public class WebViewActivity extends Activity {
 
     private boolean handleVideoOrNavigation(String url) {
         String lower = url.toLowerCase();
-        // ভিডিও ফরম্যাট পেলেই অ্যাপের নিজের প্লেয়ার চালূ হবে
         if (lower.endsWith(".mp4") || lower.endsWith(".mkv") || lower.endsWith(".avi") || 
             lower.endsWith(".m3u8") || lower.endsWith(".webm") || lower.endsWith(".ts")) {
             
             Intent intent = new Intent(this, PlayerActivity.class);
-            intent.putExtra("video_url", url);
+            intent.putExtra(PlayerActivity.EXTRA_VIDEO_URL, url);
             startActivity(intent);
             return true;
         }
@@ -94,7 +99,7 @@ public class WebViewActivity extends Activity {
     @Override
     public boolean onKeyDown(int keyCode, KeyEvent event) {
         if (keyCode == KeyEvent.KEYCODE_BACK && webView.canGoBack()) {
-            webView.goBack(); // রিমোটের ব্যাকে দিলে ফোল্ডারের পেছনে যাবে
+            webView.goBack();
             return true;
         }
         return super.onKeyDown(keyCode, event);
